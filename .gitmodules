@@ -1,0 +1,4 @@
+[submodule "krystofl.github.io"]
+	path = krystofl.github.io
+	url = git@github.com:krystofl/krystofl.github.io.git
+	branch = master
