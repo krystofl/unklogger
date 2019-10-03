@@ -1,19 +1,7 @@
 #!/usr/bin/python3
 
 '''
-
-NOTES:
-A full-width photo looks like this:
-{% include post_image_full.html
-   filename="20190303-135103-topanga-state-park-KXL00543.jpg"
-   title="Topanga State Park"
-   caption="" %}
-
-A text-width photo looks like this:
-{% include post_image_caption.html
-   filename="CA-DMV-replacement-plates.png"
-   title=""
-   caption="Source: https://www.dmv.ca.gov/portal/dmv/detail/vr/checklists/dup_sub " %}
+Create a new Klog post with photos
 '''
 
 import os
@@ -37,24 +25,41 @@ KLOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 POST_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                              'post_template.md')
+IMAGE_FULL_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   'image_full_template.md')
+
+# files with these extensions are considered images
+IMAGE_FILE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
 
 
-def create_local_file(args):
+
+def create_local_file(args, photos_dict):
   # create the local post file
+  # photos_dict is returned by upload_images() - see that function's def for spec
 
   # load the template
   with open(POST_TEMPLATE, 'r') as fp:
     post = fp.read()
 
+
   # replace the title
   post = post.replace('title: ""',
                       'title: {}'.format(args.title), 1)
 
+
   # replace the photos directory
   TODO('replace photos dir path')
 
+
   # add all the images
-  TODO('add the images')
+  with open(IMAGE_FULL_TEMPLATE, 'r') as fp:
+    image_template = fp.read()
+
+  for ifn in photos_dict['photos']:
+    new_image = image_template.replace('filename=""',
+                                       'filename="{}"'.format(ifn), 1)
+    post = post + new_image
+
 
 
   # create the path of the newfile
@@ -69,21 +74,50 @@ def create_local_file(args):
 
 
 
+def upload_images(args):
+  '''
+  Upload images to the server
+
+  returns a dict like:
+  {
+    folder: name-of-folder-containing-the-photos,
+    photos: ['1.jpg', 'two.jpg', 'third-filename.png']
+  }
+  '''
+
+  # the dictionary we'll return
+  retd = { 'folder': '', 'photos': [] }
+
+  # get the image filenames
+  for fn in os.listdir(args.photos):
+    for ext in IMAGE_FILE_EXTENSIONS:
+      if fn.endswith(ext):
+        retd['photos'].append(fn)
+        break
+
+  # create the new folder on the server
+  TODO('create folder on the server')
+
+  # scp the photos
+  TODO('scp the photos')
+
+  MSG("retd: {}".format(retd))
+  return retd
+
+
+
 def create_post(args):
   # create the post!
 
   # 1. preprocess the images
   #    for example, resize them
-  TODO('preprocess images')
+  # TODO('preprocess images')
 
   # 2. upload the images to the server
-  #     1. ssh in
-  #     2. make a new directory in the appropriate spot
-  #     3. scp the images
-  TODO('upload images')
+  photos_dict = upload_images(args)
 
   # 3. create the new post, complete with the images
-  create_local_file(args)
+  create_local_file(args, photos_dict)
 
 
 
@@ -153,6 +187,10 @@ def parse_command_line_args():
   except Exception as ex:
     MSG("Exception while validating title: {}".format(ex))
     sys.exit()
+
+
+  if args.narrow_images:
+    MSG("NOTE: Sorry, but 'narrow images' aren't supported yet.")
 
 
   MSG("args: {}".format(args))
