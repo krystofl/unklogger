@@ -2,3 +2,7 @@
 	path = krystofl.github.io
 	url = git@github.com:krystofl/krystofl.github.io.git
 	branch = master
+[submodule "krystof-utils"]
+	path = krystof-utils
+	url = git@github.com:krystofl/krystof-utils.git
+	branch = master
