@@ -22,6 +22,7 @@ import argparse
 import traceback
 import datetime
 import dateutil.parser
+import re # for title validation
 
 # Krystof utils
 KRYSTOF_UTILS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -33,6 +34,12 @@ from krystof_utils import MSG, TODO
 # path to the Klog repo on disk
 KLOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          'krystofl.github.io')
+
+
+
+def create_local_file(args):
+  # create the local post file
+  TODO()
 
 
 def create_post(args):
@@ -49,15 +56,18 @@ def create_post(args):
   TODO('upload images')
   
   # 3. create the new post, complete with the images
-  TODO('create local post file')
+  create_local_file(args)
 
+
+# returns true if title is a valid post title
+# i.e. it contains only alphanumerics and dashes
+def title_valid(title, search=re.compile(r'[^a-z0-9-]').search):
+  return not bool(search(title))
 
 
 def parse_command_line_args():
   # parse command line arguments
 
-  # TODO: date, title, path to image dir, full width or text-width images?
-  
   parser = argparse.ArgumentParser(description = 'Create a new Klog post with photos')
 
   # date
@@ -102,7 +112,20 @@ def parse_command_line_args():
         "YYYY-MM-DD. Exiting.".format(args.date))
     MSG("Exception: {}".format(ex))
     sys.exit()
-  
+
+
+  # make sure the title is valid
+  # how? what makes a valid title?
+  try:
+    if not title_valid(args.title):
+      MSG("Invalid title {} specified. Titles can only contain alphanumerics and " \
+          "dashes (hyphens). Exiting.".format(args.title))
+      sys.exit()
+  except Exception as ex:
+    MSG("Exception while validating title: {}".format(ex))
+    sys.exit()
+
+
   MSG("args: {}".format(args))
 
   return args
