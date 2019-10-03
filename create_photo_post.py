@@ -35,11 +35,38 @@ from krystof_utils import MSG, TODO
 KLOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          'krystofl.github.io')
 
+POST_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             'post_template.md')
 
 
 def create_local_file(args):
   # create the local post file
-  TODO()
+
+  # load the template
+  with open(POST_TEMPLATE, 'r') as fp:
+    post = fp.read()
+
+  # replace the title
+  post = post.replace('title: ""',
+                      'title: {}'.format(args.title), 1)
+
+  # replace the photos directory
+  TODO('replace photos dir path')
+
+  # add all the images
+  TODO('add the images')
+
+
+  # create the path of the newfile
+  newfn   = '{}-{}.md'.format(args.date.strftime("%Y-%m-%d"),
+                              args.title)
+  newfile = os.path.join(KLOG_PATH, '_posts', newfn)
+  #MSG("newfile: {}".format(newfile))
+
+  # save the new file
+  with open(newfile, 'w') as fp:
+    fp.write(post)
+
 
 
 def create_post(args):
@@ -54,15 +81,17 @@ def create_post(args):
   #     2. make a new directory in the appropriate spot
   #     3. scp the images
   TODO('upload images')
-  
+
   # 3. create the new post, complete with the images
   create_local_file(args)
+
 
 
 # returns true if title is a valid post title
 # i.e. it contains only alphanumerics and dashes
 def title_valid(title, search=re.compile(r'[^a-z0-9-]').search):
   return not bool(search(title))
+
 
 
 def parse_command_line_args():
@@ -74,12 +103,12 @@ def parse_command_line_args():
   parser.add_argument('-d', '--date',
                       default = 'TODAY',
                       help = 'Date of the new post. Also accepts TODAY')
-  
+
   # title
   # mandatory; make it by position rather than requiring the flag (how?)
   parser.add_argument('title',
                       help = 'Title of the new post')
-  
+
   # path to image dir
   parser.add_argument('-p', '--photos',
                       default = '',
@@ -90,7 +119,7 @@ def parse_command_line_args():
   parser.add_argument('-n', '--narrow-images', action = 'store_true',
                       help = 'Make the images only as wide as the text, ' \
                              'rather than the width of the entire container.')
-  
+
   args = parser.parse_args()
 
 
