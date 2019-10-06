@@ -72,8 +72,8 @@ def process_images(args):
   for imgfn in fns:
     # open the image
     img = cv2.imread(os.path.join(args.photos, imgfn))
-    MSG("original dimensions of {}: {}".format(imgfn, img.shape))
-    MSG("width: {}".format(img.shape[1]))
+    #MSG("original dimensions of {}: {}".format(imgfn, img.shape))
+    #MSG("width: {}".format(img.shape[1]))
 
     # this is where we'll save the file
     new_path = os.path.join(PROCESSED_IMG_DIR, imgfn)
@@ -89,7 +89,7 @@ def process_images(args):
       neww   = MAX_IMAGE_WIDTH_FULL
       scalar = neww / orig_width
       newh   = int(img.shape[0] * scalar)
-      MSG("scalar: {}; new dims: {} x {}".format(scalar, neww, newh))
+      #MSG("scalar: {}; new dims: {} x {}".format(scalar, neww, newh))
 
       # resize the image
       resized = cv2.resize(img, (neww, newh), interpolation = cv2.INTER_AREA)
