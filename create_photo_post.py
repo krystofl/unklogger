@@ -11,25 +11,91 @@ import traceback
 import datetime
 import dateutil.parser
 import re # for title validation
+import cv2 # for image resizing
+
+# path to this file
+UNKLOGGER_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Krystof utils
-KRYSTOF_UTILS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  'krystof-utils', 'python')
+KRYSTOF_UTILS_PATH = os.path.join(UNKLOGGER_PATH, 'krystof-utils', 'python')
 sys.path.append(KRYSTOF_UTILS_PATH)
 from krystof_utils import MSG, TODO
 
 
 # path to the Klog repo on disk
-KLOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         'krystofl.github.io')
+KLOG_PATH = os.path.join(UNKLOGGER_PATH, 'krystofl.github.io')
 
-POST_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             'post_template.md')
-IMAGE_FULL_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                   'image_full_template.md')
+POST_TEMPLATE = os.path.join(UNKLOGGER_PATH, 'post_template.md')
+IMAGE_FULL_TEMPLATE = os.path.join(UNKLOGGER_PATH, 'image_full_template.md')
 
 # files with these extensions are considered images
 IMAGE_FILE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
+
+# processed photos will be saved here
+PROCESSED_IMG_DIR = os.path.join(UNKLOGGER_PATH, 'photos-processed')
+
+# maximum width for the images
+MAX_IMAGE_WIDTH_FULL = 900 # pixels
+
+
+
+def get_image_filenames(folder_path):
+  # get the filenames of all the images in folder folder_path
+  # returns them as a list
+  fns = []
+  for fn in os.listdir(folder_path):
+    for ext in IMAGE_FILE_EXTENSIONS:
+      if fn.endswith(ext):
+        fns.append(fn)
+        break
+  return fns
+
+
+
+def process_images(args):
+  '''
+  Process / prepare photos for upload:
+    1. resize, if appropriate
+
+  saves the processed images to PROCESSED_IMG_DIR
+  '''
+  # make sure the folder for processed images exists
+  try:
+    os.makedirs(PROCESSED_IMG_DIR)
+  except FileExistsError:
+    pass
+
+
+  # get the image filenames
+  fns = get_image_filenames(args.photos)
+
+  for imgfn in fns:
+    # open the image
+    img = cv2.imread(os.path.join(args.photos, imgfn))
+    MSG("original dimensions of {}: {}".format(imgfn, img.shape))
+    MSG("width: {}".format(img.shape[1]))
+
+    # this is where we'll save the file
+    new_path = os.path.join(PROCESSED_IMG_DIR, imgfn)
+
+    # if the image is smaller than the max width, just copy it
+    orig_width = img.shape[1]
+    if orig_width <= MAX_IMAGE_WIDTH_FULL:
+      cv2.imwrite(new_path, img)
+
+    # otherwise, resize it
+    else:
+      # scale factor
+      neww   = MAX_IMAGE_WIDTH_FULL
+      scalar = neww / orig_width
+      newh   = int(img.shape[0] * scalar)
+      MSG("scalar: {}; new dims: {} x {}".format(scalar, neww, newh))
+
+      # resize the image
+      resized = cv2.resize(img, (neww, newh), interpolation = cv2.INTER_AREA)
+
+      # save the new file
+      cv2.imwrite(new_path, resized)
 
 
 
@@ -89,11 +155,7 @@ def upload_images(args):
   retd = { 'folder': '', 'photos': [] }
 
   # get the image filenames
-  for fn in os.listdir(args.photos):
-    for ext in IMAGE_FILE_EXTENSIONS:
-      if fn.endswith(ext):
-        retd['photos'].append(fn)
-        break
+  retd['photos'] = get_image_filenames(PROCESSED_IMG_DIR)
 
   # create the new folder on the server
   TODO('create folder on the server')
@@ -111,7 +173,7 @@ def create_post(args):
 
   # 1. preprocess the images
   #    for example, resize them
-  # TODO('preprocess images')
+  process_images(args)
 
   # 2. upload the images to the server
   photos_dict = upload_images(args)
