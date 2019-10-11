@@ -11,6 +11,7 @@ import traceback
 import datetime
 import dateutil.parser
 import json
+import copy
 import re # for title validation
 import cv2 # for image resizing
 
@@ -45,9 +46,14 @@ SERVER_CONFIG_FILE = 'server_config.json'
 def get_image_filenames(folder_path):
   # get the filenames of all the images in folder folder_path
   # returns them as a list
+
+  # also consider capitalized versions of all extensions
+  all_extensions = copy.deepcopy(IMAGE_FILE_EXTENSIONS)
+  all_extensions.extend([e.upper() for e in IMAGE_FILE_EXTENSIONS])
+
   fns = []
   for fn in os.listdir(folder_path):
-    for ext in IMAGE_FILE_EXTENSIONS:
+    for ext in all_extensions:
       if fn.endswith(ext):
         fns.append(fn)
         break
