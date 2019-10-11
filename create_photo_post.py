@@ -10,6 +10,7 @@ import argparse
 import traceback
 import datetime
 import dateutil.parser
+import json
 import re # for title validation
 import cv2 # for image resizing
 
@@ -37,6 +38,8 @@ PROCESSED_IMG_DIR = os.path.join(UNKLOGGER_PATH, 'photos-processed')
 # maximum width for the images
 MAX_IMAGE_WIDTH_FULL = 900 # pixels
 
+# json file containing server configuration
+SERVER_CONFIG_FILE = 'server_config.json'
 
 
 def get_image_filenames(folder_path):
@@ -65,6 +68,16 @@ def process_images(args):
   except FileExistsError:
     pass
 
+  # delete any files that were previously in PROCESSED_IMG_DIR
+  try:
+    for fn in os.listdir(PROCESSED_IMG_DIR):
+      filepath = os.path.join(PROCESSED_IMG_DIR, fn)
+      if os.path.isfile(filepath):
+        os.unlink(filepath)
+  except Exception as e:
+    MSG("Exception while emptying PROCESSED_IMG_DIR: {}".format(e))
+
+  MSG("Resizing the photos...")
 
   # get the image filenames
   fns = get_image_filenames(args.photos)
@@ -114,7 +127,8 @@ def create_local_file(args, photos_dict):
 
 
   # replace the photos directory
-  TODO('replace photos dir path')
+  post = post.replace('photos_dir: ""',
+                      'photos_dir: "{}"'.format(photos_dict['folder']))
 
 
   # add all the images
@@ -157,13 +171,36 @@ def upload_images(args):
   # get the image filenames
   retd['photos'] = get_image_filenames(PROCESSED_IMG_DIR)
 
-  # create the new folder on the server
-  TODO('create folder on the server')
+  # get the name of the folder on the server where the photos will go
+  retd['folder'] = '{}-{}'.format(args.date, args.title)
 
-  # scp the photos
-  TODO('scp the photos')
+  # print out the commands the user needs to run to get stuff on the server
+  try:
+    # open the server config json file
+    with open(SERVER_CONFIG_FILE, 'r') as f:
+      server_config = json.load(f)
+    #MSG("server_config: {}".format(server_config))
 
-  MSG("retd: {}".format(retd))
+    # folder on server where the images will go
+    server_folder_path = os.path.join(server_config['path_to_post_img_root'],
+                                      retd['folder'])
+
+    print("")
+    MSG("I think you need to run the following commands " \
+        "to get the photos on the server: ")
+    print("ssh {}".format(server_config['host']))
+    print("mkdir {}".format(os.path.join(server_folder_path)))
+    print("<<< RUN THE BELOW BACK ON THE LOCAL MACHINE >>>")
+    print("scp {}/* {}@{}:{}".format(PROCESSED_IMG_DIR,
+                                     server_config['user'],
+                                     server_config['host'],
+                                     server_folder_path))
+    print("")
+
+  except Exception as e:
+    MSG("Exception figuring out how to upload the images to the server: {}".format(e))
+
+  #MSG("retd: {}".format(retd))
   return retd
 
 
@@ -185,7 +222,7 @@ def create_post(args):
 
 # returns true if title is a valid post title
 # i.e. it contains only alphanumerics and dashes
-def title_valid(title, search=re.compile(r'[^a-z0-9-]').search):
+def title_valid(title, search=re.compile(r'[^a-zA-Z0-9-]').search):
   return not bool(search(title))
 
 
@@ -207,9 +244,10 @@ def parse_command_line_args():
 
   # path to image dir
   parser.add_argument('-p', '--photos',
-                      default = '',
+                      default = 'photos',
                       help = 'Path to the folder on disk that contains ' \
-                             'the images that should be included in the post')
+                             'the images that should be included in the post. ' \
+                             'Default: photos dir in the same directory as this script.')
 
   # full-width or text-width images?
   parser.add_argument('-n', '--narrow-images', action = 'store_true',
@@ -255,8 +293,7 @@ def parse_command_line_args():
     MSG("NOTE: Sorry, but 'narrow images' aren't supported yet.")
 
 
-  MSG("args: {}".format(args))
-
+  #MSG("args: {}".format(args))
   return args
 
 
