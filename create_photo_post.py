@@ -178,7 +178,8 @@ def upload_images(args):
   retd['photos'] = get_image_filenames(PROCESSED_IMG_DIR)
 
   # get the name of the folder on the server where the photos will go
-  retd['folder'] = '{}-{}'.format(args.date, args.title)
+  retd['folder'] = '{}-{}'.format(args.date.strftime("%Y-%m-%d"),
+                                  args.title)
 
   # print out the commands the user needs to run to get stuff on the server
   try:
