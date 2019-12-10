@@ -215,14 +215,21 @@ def upload_images(args):
 def create_post(args):
   # create the post!
 
-  # 1. preprocess the images
+  # 1. preprocess the images --------------------------------------------------
   #    for example, resize them
   process_images(args)
 
-  # 2. upload the images to the server
+
+  # 2. upload the images to the server ----------------------------------------
   photos_dict = upload_images(args)
 
-  # 3. create the new post, complete with the images
+  # check if we should wrap it up here
+  if args.resize_only:
+    MSG("Stopping here because '--resize-only' is set")
+    return
+
+
+  # 3. create the new post, complete with the images --------------------------
   create_local_file(args, photos_dict)
 
 
@@ -260,6 +267,10 @@ def parse_command_line_args():
   parser.add_argument('-n', '--narrow-images', action = 'store_true',
                       help = 'Make the images only as wide as the text, ' \
                              'rather than the width of the entire container.')
+
+  # full-width or text-width images?
+  parser.add_argument('-r', '--resize-only', action = 'store_true',
+                      help = "Just resize the images - don't do anything else")
 
   args = parser.parse_args()
 
