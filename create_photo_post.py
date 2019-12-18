@@ -6,6 +6,7 @@ Create a new Klog post with photos
 
 import os
 import sys
+import shutil
 import argparse
 import traceback
 import datetime
@@ -26,6 +27,11 @@ from krystof_utils import MSG, TODO
 
 # path to the Klog repo on disk
 KLOG_PATH = os.path.join(UNKLOGGER_PATH, 'krystofl.github.io')
+
+# path to the klog-assets repo on disk - this is how the images are published
+KLOG_ASSETS_PATH = os.path.join(UNKLOGGER_PATH, 'klog-assets')
+KLOG_ASSETS_POST_IMAGE_PATH = os.path.join(KLOG_ASSETS_PATH,
+                                           'images', 'posts')
 
 POST_TEMPLATE = os.path.join(UNKLOGGER_PATH, 'post_template.md')
 IMAGE_FULL_TEMPLATE = os.path.join(UNKLOGGER_PATH, 'image_full_template.md')
@@ -212,6 +218,50 @@ def upload_images(args):
 
 
 
+
+def add_images_to_assets_repo(args):
+  '''
+  returns a dict like:
+  {
+    folder: name-of-folder-containing-the-photos,
+    photos: ['1.jpg', 'two.jpg', 'third-filename.png']
+  }
+  '''
+
+  # the dictionary we'll return
+  retd = { 'folder': '', 'photos': [] }
+
+  # get the image filenames
+  retd['photos'] = get_image_filenames(PROCESSED_IMG_DIR)
+  if len(retd['photos']) == 0:
+    raise Exception("No processed photos found!")
+
+  # get the name of the folder on the server where the photos will go
+  retd['folder'] = '{}-{}'.format(args.date.strftime("%Y-%m-%d"),
+                                  args.title)
+
+  # make the directory where the photos will go
+  newdir_path = os.path.join(KLOG_ASSETS_POST_IMAGE_PATH, retd['folder'])
+  try:
+    os.makedirs(newdir_path)
+  except FileExistsError:
+    pass
+
+  MSG("Copying images to {}...".format(newdir_path))
+
+  # copy the photos
+  for f in retd['photos']:
+    shutil.copy(os.path.join(PROCESSED_IMG_DIR, f),
+                newdir_path)
+
+  MSG("Done copying images. Don't forget to push the klog-assets repo!")
+
+  #MSG("retd: {}".format(retd))
+  return retd
+
+
+
+
 def create_post(args):
   # create the post!
 
@@ -219,14 +269,15 @@ def create_post(args):
   #    for example, resize them
   process_images(args)
 
-
-  # 2. upload the images to the server ----------------------------------------
-  photos_dict = upload_images(args)
-
   # check if we should wrap it up here
   if args.resize_only:
     MSG("Stopping here because '--resize-only' is set")
     return
+
+
+  # 2. add images to the klog-assets repo -------------------------------------
+  #photos_dict = upload_images(args)
+  photos_dict = add_images_to_assets_repo(args)
 
 
   # 3. create the new post, complete with the images --------------------------

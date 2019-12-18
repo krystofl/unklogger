@@ -6,3 +6,7 @@
 	path = krystof-utils
 	url = git@github.com:krystofl/krystof-utils.git
 	branch = master
+[submodule "klog-assets"]
+	path = klog-assets
+	url = git@github.com:krystofl/klog-assets.git
+	branch = master
