@@ -2,11 +2,10 @@
 layout: post
 title: ""
 description: ""
-tags: []
+tags: [Photography]
 photos_dir: ""
-banner_image: 
+banner_image:
 ---
 
 
 <!--more-->
-
