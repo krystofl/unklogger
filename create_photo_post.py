@@ -14,15 +14,12 @@ import json
 import copy
 import re # for title validation
 import cv2 # for image resizing
+import eglogging
+from eglogging import *
+logging_load_human_config()
 
 # path to this file
 UNKLOGGER_PATH = os.path.dirname(os.path.abspath(__file__))
-
-# Krystof utils
-KRYSTOF_UTILS_PATH = os.path.join(UNKLOGGER_PATH, 'krystof-utils', 'python')
-sys.path.append(KRYSTOF_UTILS_PATH)
-from krystof_utils import MSG, TODO
-
 
 # path to the Klog repo on disk
 KLOG_PATH = os.path.join(UNKLOGGER_PATH, 'krystofl.github.io')
@@ -42,7 +39,9 @@ IMAGE_FILE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
 PROCESSED_IMG_DIR = os.path.join(UNKLOGGER_PATH, 'photos-processed')
 
 # maximum width for the images
-MAX_IMAGE_WIDTH_FULL = 900 # pixels
+# max width displayed within post is 900 pixels,
+# but in a lightbox the size can be larger
+MAX_IMAGE_WIDTH_FULL = 1800 # pixels
 
 # json file containing server configuration
 SERVER_CONFIG_FILE = 'server_config.json'
@@ -210,7 +209,7 @@ def upload_images(args):
     print("")
 
   except Exception as e:
-    MSG("Exception figuring out how to upload the images to the server: {}".format(e))
+    ERROR("Exception figuring out how to upload the images to the server: {}".format(e))
 
   #MSG("retd: {}".format(retd))
   return retd
@@ -314,9 +313,9 @@ def parse_command_line_args():
                              'Default: photos dir in the same directory as this script.')
 
   # full-width or text-width images?
-  parser.add_argument('-n', '--narrow-images', action = 'store_true',
-                      help = 'Make the images only as wide as the text, ' \
-                             'rather than the width of the entire container.')
+  # parser.add_argument('-n', '--narrow-images', action = 'store_true',
+  #                     help = 'Make the images only as wide as the text, ' \
+  #                            'rather than the width of the entire container.')
 
   # full-width or text-width images?
   parser.add_argument('-r', '--resize-only', action = 'store_true',
@@ -339,9 +338,9 @@ def parse_command_line_args():
       MSG("Setting date to {}".format(args.date.strftime("%Y-%m-%d")))
 
   except Exception as ex:
-    MSG("Invalid date {} specified. Please specify the date of the post as " \
+    ERROR("Invalid date {} specified. Please specify the date of the post as " \
         "YYYY-MM-DD. Exiting.".format(args.date))
-    MSG("Exception: {}".format(ex))
+    ERROR("Exception: {}".format(ex))
     sys.exit()
 
 
@@ -349,17 +348,15 @@ def parse_command_line_args():
   # how? what makes a valid title?
   try:
     if not title_valid(args.title):
-      MSG("Invalid title {} specified. Titles can only contain alphanumerics and " \
+      ERROR("Invalid title {} specified. Titles can only contain alphanumerics and " \
           "dashes (hyphens). Exiting.".format(args.title))
       sys.exit()
   except Exception as ex:
-    MSG("Exception while validating title: {}".format(ex))
+    ERROR("Exception while validating title: {}".format(ex))
     sys.exit()
 
-
-  if args.narrow_images:
-    MSG("NOTE: Sorry, but 'narrow images' aren't supported yet.")
-
+  # if args.narrow_images:
+  #   WARN("Sorry, but 'narrow images' aren't supported yet.")
 
   #MSG("args: {}".format(args))
   return args
@@ -374,7 +371,7 @@ if __name__ == '__main__':
   try:
     create_post(args)
   except Exception as ex:
-    MSG("Exception: {}".format(ex))
+    ERROR("Exception: {}".format(ex))
 
     # print more detailed info
     traceback.print_exc()
