@@ -148,7 +148,7 @@ def create_local_file(args, photos_dict):
   for ifn in photos_dict['photos']:
     new_image = image_template.replace('filename=""',
                                        'filename="{}"'.format(ifn), 1)
-    post = post + new_image
+    post = post + new_image + '\n'
 
 
 
